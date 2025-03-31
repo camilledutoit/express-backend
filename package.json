@@ -5,7 +5,7 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "test": "mocha Tests/**/*.test.js"
+    "test": "mocha Tests/**/*.test.js --exit --timeout 10000"
   },
   "author": "Codecademy",
   "license": "ISC",

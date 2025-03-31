@@ -27,8 +27,12 @@ USER appuser
 # Set working directory
 WORKDIR /usr/src/app
 
-# Copy only production files from the builder stage
-COPY --from=builder /usr/src/app /usr/src/app
+# Only copy necessary files for production
+COPY --from=builder /usr/src/app/package.json /usr/src/app/package-lock.json ./
+COPY --from=builder /usr/src/app/server.js ./
+
+# Copy any other necessary production files
+COPY --from=builder /usr/src/app/node_modules ./node_modules
 
 # Expose port 3000
 EXPOSE 4000

@@ -28,13 +28,15 @@ USER appuser
 WORKDIR /usr/src/app
 
 # Only copy necessary files for production
-COPY --from=builder /usr/src/app/package.json /usr/src/app/package-lock.json ./
+COPY --from=builder /usr/src/app/package*.json ./
 COPY --from=builder /usr/src/app/server.js ./
+COPY --from=builder /usr/src/app/db.js ./  # Add this line
+COPY --from=builder /usr/src/app/node_modules ./node_modules
 
 # Copy any other necessary production files
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 
-# Expose port 3000
+# Expose port 4000
 EXPOSE 4000
 
 # Add a health check

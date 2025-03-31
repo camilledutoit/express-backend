@@ -62,5 +62,5 @@ export default app;
 
 // Start the server only if not in test mode
 if (process.env.NODE_ENV !== "test") {
-    app.listen(4000, () => console.log("Simple server running on http://localhost:4000"));
+    app.listen(4000, '0.0.0.0', () => console.log("Simple server running on http://localhost:4000"));
 }

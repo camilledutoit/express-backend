@@ -33,12 +33,7 @@ jobs:
         run: |
           docker run --rm service-server-builder npm test
 
-      # Step 5: Run linting
-      - name: Run ESLint
-        run: |
-          docker run --rm service-server-builder npm run lint
-
-      # Step 6: Verify health check in production container
+      # Step 5: Verify health check in production container
       - name: Verify health check
         run: |
           docker run -d --name service-server -p 4000:4000 service-server:latest

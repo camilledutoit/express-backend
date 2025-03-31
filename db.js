@@ -1,19 +1,19 @@
-const sqlite3 = require("sqlite3");
+import sqlite3 from "sqlite3";
 
 const DB_ADDR = ":memory:";
 
 const users = [
     {
         username: "1lameuser",
-        password: "secret_password"
+        password: "secret_password",
     },
     {
         username: "cool_user_87",
-        password: "notPassword!"
+        password: "notPassword!",
     },
 ];
 
-const initDB = () => {
+export const initDB = () => {
     const db = new sqlite3.Database(DB_ADDR);
     db.serialize(() => {
         db.run(`CREATE TABLE users (
@@ -23,12 +23,10 @@ const initDB = () => {
         )`);
 
         const insertStmt = db.prepare("INSERT INTO users(username,password) VALUES (?,?)");
-        users.forEach(({ username, password}, i) => {
+        users.forEach(({ username, password }) => {
             insertStmt.run([username, password]);
-        })
+        });
         insertStmt.finalize();
     });
     return db;
 };
-
-module.exports = { initDB };

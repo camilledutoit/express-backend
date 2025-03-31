@@ -11,6 +11,9 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Debugging: List the contents of the tests directory
+RUN ls -l tests
+
 # Run tests (including devDependencies)
 RUN npm test
 

@@ -40,10 +40,10 @@ jobs:
           sleep 30
           curl -f http://localhost:4000/health
           docker stop service-server
-          
+
       # Step 7: Scan Docker image with Snyk
       - name: Scan Docker image with Snyk
-        uses: snyk/actions/docker@v2
+        uses: snyk/actions/docker@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:

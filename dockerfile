@@ -30,6 +30,7 @@ WORKDIR /usr/src/app
 # Only copy necessary files for production
 COPY --from=builder /usr/src/app/package*.json ./
 COPY --from=builder /usr/src/app/server.js ./
+COPY --from=builder /usr/src/app/db.js ./
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 
 # Copy any other necessary production files

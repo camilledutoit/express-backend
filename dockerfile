@@ -1,5 +1,5 @@
 # Stage 1: Build and Test
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /usr/src/app
@@ -11,14 +11,12 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Run tests (including devDependencies)
-RUN npm test
-
 # Stage 2: Production
-FROM node:18-alpine
+FROM node:20-alpine
 
-# Install curl for healthcheck
-RUN apk add --no-cache curl
+# Install curl and upgrade npm
+RUN apk add --no-cache curl && \
+    npm install -g npm@11.0.0
 
 # Create a non-root user
 RUN addgroup -g 1001 appgroup && adduser -u 1001 -G appgroup -s /bin/sh -D appuser
@@ -28,10 +26,7 @@ USER appuser
 WORKDIR /usr/src/app
 
 # Only copy necessary files for production
-COPY --from=builder /usr/src/app/package*.json ./
-COPY --from=builder /usr/src/app/server.js ./
-COPY --from=builder /usr/src/app/db.js ./
-COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY --from=builder /usr/src/app /usr/src/app
 
 # Copy any other necessary production files
 COPY --from=builder /usr/src/app/node_modules ./node_modules

@@ -11,8 +11,8 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Remove development dependencies
-RUN npm prune --production
+# Run tests (including devDependencies)
+RUN npm test
 
 # Stage 2: Production
 FROM node:18-alpine

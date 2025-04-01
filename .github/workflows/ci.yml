@@ -9,8 +9,9 @@ on:
       - main
 
 permissions:
-  id-token: write
+  id-token: write # Required for Sigstore keyless signing
   contents: read
+  packages: write # Required to push images to GHCR
 
 jobs:
   build-and-test:
@@ -65,25 +66,7 @@ jobs:
         run: |
           conftest test ./dockerfile --policy ./policies/docker.rego
 
-      # Step 9: Login to GitHub Container Registry
-      - name: Login to GHCR
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # Step 10: Tag the image
-      - name: Tag Docker image
-        run: |
-          docker tag service-server:latest ghcr.io/${{ github.repository }}:latest
-
-      # Step 11: Push Docker image
-      - name: Push Docker image
-        run: |
-          docker push ghcr.io/${{ github.repository }}:latest
-
-      # Step 12: Install the Latest Cosign
+      # Step 9: Install the Latest Cosign
       - name: Install Cosign
         run: |
           COSIGN_VERSION=$(curl -s https://api.github.com/repos/sigstore/cosign/releases/latest | grep 'tag_name' | cut -d '"' -f 4)
@@ -92,21 +75,21 @@ jobs:
           sudo mv cosign /usr/local/bin/
           cosign version # Verify the installed version
 
-      # Step 13: Fetch the Image Digest
+      # Step 10: Fetch the Image Digest
       - name: Get Image Digest
         id: digest
         run: |
           IMAGE_DIGEST=$(skopeo inspect docker://ghcr.io/${{ github.repository }}:latest | jq -r '.Digest')
           echo "IMAGE_DIGEST=$IMAGE_DIGEST" >> $GITHUB_ENV
 
-      # Step 14: Sign the Docker image with Sigstore
+      # Step 11: Sign the Docker image with Sigstore
       - name: Sign Docker image with Sigstore
         env:
           COSIGN_EXPERIMENTAL: "true" # Enable keyless signing
         run: |
           cosign sign --yes ghcr.io/${{ github.repository }}@$IMAGE_DIGEST
 
-      # Step 15: Verify the Docker image signature
+      # Step 12: Verify the Docker image signature
       - name: Verify Docker image signature
         env:
           COSIGN_EXPERIMENTAL: "true" # Enable keyless verification

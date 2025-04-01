@@ -65,11 +65,7 @@ jobs:
         run: |
           conftest test ./dockerfile --policy ./policies/docker.rego
 
-      # Step 9: Install Cosign
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.1.1
-
-      # Step 10: Login to GitHub Container Registry
+      # Step 9: Login to GitHub Container Registry
       - name: Login to GHCR
         uses: docker/login-action@v2
         with:
@@ -77,22 +73,28 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 11: Push Docker image
-      - name: Push Docker image
+      # Step 10: Tag the image
+      - name: Tag Docker image
         run: |
           docker tag service-server:latest ghcr.io/${{ github.repository }}:latest
+
+      # Step 11: Sign and Push with Docker Content Trust
+      - name: Sign and Push Docker image
+        env:
+          DOCKER_CONTENT_TRUST: 1
+          DOCKER_CONTENT_TRUST_SERVER: https://ghcr.io
+          DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE: ${{ secrets.DCT_ROOT_PASSPHRASE }}
+          DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE: ${{ secrets.DCT_REPOSITORY_PASSPHRASE }}
+        run: |
+          docker trust key generate deployer
+          docker trust signer add --key deployer.pub deployer ghcr.io/${{ github.repository }}
+          docker trust sign ghcr.io/${{ github.repository }}:latest
           docker push ghcr.io/${{ github.repository }}:latest
 
-      # Step 12: Sign the image using Keyless signing
-      - name: Sign the image
+      # Step 12: Verify image signature
+      - name: Verify Docker image
         env:
-          COSIGN_EXPERIMENTAL: 1
+          DOCKER_CONTENT_TRUST: 1
+          DOCKER_CONTENT_TRUST_SERVER: https://ghcr.io
         run: |
-          cosign sign ghcr.io/${{ github.repository }}:latest
-
-      # Step 13: Verify the signature
-      - name: Verify the signature
-        env:
-          COSIGN_EXPERIMENTAL: 1
-        run: |
-          cosign verify ghcr.io/${{ github.repository }}:latest
+          docker trust inspect ghcr.io/${{ github.repository }}:latest

@@ -59,4 +59,4 @@ jobs:
       # Step 9: Run OPA policies on Dockerfile
       - name: Run OPA policies
         run: |
-          conftest test Dockerfile --policy policies/
+          conftest test ./Dockerfile --policy policies/docker.rego

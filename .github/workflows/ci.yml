@@ -86,9 +86,12 @@ jobs:
           mkdir -p ~/.config/notation/certificates
           mkdir -p ~/.config/notation/keys
           
-          # Save certificates with proper formatting
-          echo "${{ secrets.NOTATION_CERT }}" | base64 -d > ~/.config/notation/certificates/cert.pem
-          echo "${{ secrets.NOTATION_KEY }}" | base64 -d > ~/.config/notation/keys/key.pem
+          # Save certificates directly
+          echo "${{ secrets.NOTATION_CERT }}" > ~/.config/notation/certificates/cert.pem
+          echo "${{ secrets.NOTATION_KEY }}" > ~/.config/notation/keys/key.pem
+          
+          # Set proper permissions for private key
+          chmod 600 ~/.config/notation/keys/key.pem
           
           # Add certificate and key
           notation certificate add prod-cert --type ca --store ca ~/.config/notation/certificates/cert.pem

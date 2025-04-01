@@ -82,10 +82,17 @@ jobs:
       # Step 11: Configure Notation certificates
       - name: Configure Notation certificates
         run: |
-          echo "${{ secrets.NOTATION_CERT }}" > cert.pem
-          echo "${{ secrets.NOTATION_KEY }}" > key.pem
-          notation certificate add prod-cert --type ca --store ca cert.pem
-          notation key import prod-key --store system --type private key.pem
+          # Create directories for certificates
+          mkdir -p ~/.config/notation/certificates
+          mkdir -p ~/.config/notation/keys
+          
+          # Save certificates with proper formatting
+          echo "${{ secrets.NOTATION_CERT }}" | base64 -d > ~/.config/notation/certificates/cert.pem
+          echo "${{ secrets.NOTATION_KEY }}" | base64 -d > ~/.config/notation/keys/key.pem
+          
+          # Add certificate and key
+          notation certificate add prod-cert --type ca --store ca ~/.config/notation/certificates/cert.pem
+          notation key import prod-key --store system --type private ~/.config/notation/keys/key.pem
 
       # Step 12: Sign the Docker image with Notation
       - name: Sign Docker image with Notation

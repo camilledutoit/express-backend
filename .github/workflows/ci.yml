@@ -61,19 +61,24 @@ jobs:
         run: |
           conftest test ./dockerfile --policy ./policies/docker.rego
 
+      # Step 9: Install Notation
       - name: Install Notation
         run: |
-          VERSION="1.1.0"
-          curl -Lo notation.tar.gz https://github.com/notaryproject/notation/releases/download/v${VERSION}/notation_${VERSION}_linux_amd64.tar.gz
-          tar xvzf notation.tar.gz
-          sudo install notation /usr/local/bin/
+          curl -Lo notation.tar.gz https://github.com/notaryproject/notation/releases/latest/download/notation-linux-amd64.tar.gz
+          tar xvf notation.tar.gz
+          sudo mv notation /usr/local/bin/
 
-      - name: Generate Notation Certificate
+      # Step 10: Set up Notation key (self-signed for testing)
+      - name: Set up Notation signing key
         run: |
-          notation cert generate-test --default "github-actions"
+          notation cert generate-test --default "notation-local"
 
-      - name: Sign with Notation
+      # Step 11: Sign the Docker image with Notation
+      - name: Sign Docker image with Notation
         run: |
-          notation sign --key github-actions ghcr.io/${{ github.repository }}:latest
-        env:
-          NOTATION_USERNAME: ${{ github.actor }}
+          notation sign service-server:latest
+
+      # Step 12: Verify the Docker image signature with Notation
+      - name: Verify Docker image signature
+        run: |
+          notation verify service-server:latest

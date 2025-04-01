@@ -1,0 +1,14 @@
+{
+    "version": "1.0",
+    "trustPolicies": [
+      {
+        "name": "default",
+        "registryScopes": ["ghcr.io/*"],
+        "signatureVerification": {
+          "level": "strict"
+        },
+        "trustStores": ["ca"],
+        "trustedIdentities": ["*"]
+      }
+    ]
+  }

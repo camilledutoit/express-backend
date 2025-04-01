@@ -91,3 +91,11 @@ jobs:
         env:
           NOTATION_USERNAME: $GITHUB_ACTOR
           NOTATION_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      
+      # Step 13: Verify the Docker image signature with Notation
+      - name: Verify Docker image signature with Notation
+        run: |
+          notation verify ghcr.io/${{ github.repository }}:latest
+        env:
+          NOTATION_USERNAME: $GITHUB_ACTOR
+          NOTATION_PASSWORD: ${{ secrets.GITHUB_TOKEN }}

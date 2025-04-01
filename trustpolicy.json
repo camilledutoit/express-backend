@@ -2,13 +2,15 @@
     "version": "1.0",
     "trustPolicies": [
       {
-        "name": "default",
-        "registryScopes": ["ghcr.io/camilledutoit/express-backend"],
+        "name": "prod-policy",
+        "registryScopes": [ "ghcr.io" ],
         "signatureVerification": {
           "level": "strict"
         },
-        "trustStores": ["ca:notation-local"],
-        "trustedIdentities": ["*"]
+        "trustStores": ["ca:prod-cert"],
+        "trustedIdentities": [
+          "*"
+        ]
       }
     ]
   }

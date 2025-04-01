@@ -79,15 +79,18 @@ jobs:
           docker tag service-server:latest ghcr.io/${{ github.repository }}:latest
           docker push ghcr.io/${{ github.repository }}:latest
 
-      # Step 11: Set up Notation key (self-signed for testing)
-      - name: Set up Notation signing key
+      # Step 11: Configure Notation certificates
+      - name: Configure Notation certificates
         run: |
-          notation cert generate-test --default "notation-local"
+          echo "${{ secrets.NOTATION_CERT }}" > cert.pem
+          echo "${{ secrets.NOTATION_KEY }}" > key.pem
+          notation cert add --name prod-cert --cert cert.pem
+          notation key add --name prod-key --key key.pem
 
       # Step 12: Sign the Docker image with Notation
       - name: Sign Docker image with Notation
         run: |
-          notation sign ghcr.io/${{ github.repository }}:latest
+          notation sign --key prod-key ghcr.io/${{ github.repository }}:latest
         env:
           NOTATION_USERNAME: $GITHUB_ACTOR
           NOTATION_PASSWORD: ${{ secrets.GITHUB_TOKEN }}

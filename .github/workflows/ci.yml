@@ -83,7 +83,7 @@ jobs:
           echo "IMAGE_DIGEST=$IMAGE_DIGEST" >> $GITHUB_ENV
 
       # Step 11: Sign the Docker image with Sigstore
-      - name: Sign Docker image with Sigstore
+      - name: Signing Docker image with Sigstore
         env:
           COSIGN_EXPERIMENTAL: "true" # Enable keyless signing
         run: |

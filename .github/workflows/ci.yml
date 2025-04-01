@@ -66,7 +66,6 @@ jobs:
         run: |
           conftest test ./dockerfile --policy ./policies/docker.rego
 
-      # Step 9: Install the Latest Cosign
       - name: Install Cosign
         run: |
           COSIGN_VERSION=$(curl -s https://api.github.com/repos/sigstore/cosign/releases/latest | grep 'tag_name' | cut -d '"' -f 4)
@@ -74,22 +73,20 @@ jobs:
           chmod +x cosign
           sudo mv cosign /usr/local/bin/
           cosign version # Verify the installed version
-
-      # Step 10: Fetch the Image Digest
+  
       - name: Get Image Digest
         id: digest
         run: |
           IMAGE_DIGEST=$(skopeo inspect docker://ghcr.io/${{ github.repository }}:latest | jq -r '.Digest')
           echo "IMAGE_DIGEST=$IMAGE_DIGEST" >> $GITHUB_ENV
-
-      # Step 11: Sign the Docker image with Sigstore
+  
       - name: Signing Docker image with Sigstore
         env:
           COSIGN_EXPERIMENTAL: "true" # Enable keyless signing
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
         run: |
-          cosign sign --yes ghcr.io/${{ github.repository }}@$IMAGE_DIGEST
-
-      # Step 12: Verify the Docker image signature
+          echo $GHCR_PAT | cosign sign --yes ghcr.io/${{ github.repository }}@$IMAGE_DIGEST
+  
       - name: Verify Docker image signature
         env:
           COSIGN_EXPERIMENTAL: "true" # Enable keyless verification

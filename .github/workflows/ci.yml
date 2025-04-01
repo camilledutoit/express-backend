@@ -41,7 +41,7 @@ jobs:
           curl -f http://localhost:4000/health
           docker stop service-server
 
-      # Step 7: Scan Docker image with Snyk
+      # Step 6: Scan Docker image with Snyk
       - name: Scan Docker image with Snyk
         uses: snyk/actions/docker@master
         env:
@@ -50,13 +50,28 @@ jobs:
           image: service-server:latest
           args: --severity-threshold=high
 
-      # Step 8: Install Conftest
+      # Step 7: Install Conftest
       - name: Install Conftest
         run: |
           wget https://github.com/open-policy-agent/conftest/releases/download/v0.58.0/conftest_0.58.0_Linux_x86_64.tar.gz
           tar -xzf conftest_0.58.0_Linux_x86_64.tar.gz -C /usr/local/bin
 
-      # Step 9: Run OPA policies on Dockerfile
+      # Step 8: Run OPA policies on Dockerfile
       - name: Run OPA policies
         run: |
           conftest test ./dockerfile --policy ./policies/docker.rego
+
+      # Step 9: Install Cosign
+      - name: Install Cosign
+        run: |
+          wget https://github.com/sigstore/cosign/releases/download/v2.0.0/cosign-linux-amd64
+          chmod +x cosign-linux-amd64
+          mv cosign-linux-amd64 /usr/local/bin/cosign
+
+      # Step 10: Sign Docker image with Cosign
+      - name: Sign Docker image
+        env:
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: |
+          echo "${{ secrets.COSIGN_KEY }}" > cosign.key
+          cosign sign --key cosign.key service-server:latest

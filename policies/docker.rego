@@ -5,10 +5,10 @@ deny[msg] {
   msg = "Dockerfile must specify a non-root user."
 }
 
-# Ensure port 4000 is exposed
 deny[msg] {
-  not "4000/tcp" in input.Config.ExposedPorts
-  msg = "Dockerfile must expose port 4000."
+    ports := input.Config.ExposedPorts
+    not ports["4000/tcp"]
+    msg = "Dockerfile must expose port 4000."
 }
 
 deny[msg] {

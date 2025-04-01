@@ -76,9 +76,9 @@ jobs:
       # Step 11: Sign the Docker image with Notation
       - name: Sign Docker image with Notation
         run: |
-          notation sign service-server:latest
+          notation sign ghcr.io/${{ github.repository }}:latest
 
       # Step 12: Verify the Docker image signature with Notation
       - name: Verify Docker image signature
         run: |
-          notation verify service-server:latest
+          notation verify ghcr.io/${{ github.repository }}:latest

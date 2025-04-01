@@ -6,7 +6,9 @@ deny[msg] {
 }
 
 deny[msg] {
-  not input.Config.ExposedPorts[port] == "4000"
+  not some key
+  key = "4000/tcp"
+  key in input.Config.ExposedPorts
   msg = "Dockerfile must expose port 4000."
 }
 

@@ -84,8 +84,8 @@ jobs:
         run: |
           echo "${{ secrets.NOTATION_CERT }}" > cert.pem
           echo "${{ secrets.NOTATION_KEY }}" > key.pem
-          notation certificate add prod-cert --type x509 --store ca cert.pem
-          notation key import prod-key --store keys --type private key.pem
+          notation certificate add prod-cert --type ca --store ca cert.pem
+          notation key import prod-key --store system --type private key.pem
 
       # Step 12: Sign the Docker image with Notation
       - name: Sign Docker image with Notation

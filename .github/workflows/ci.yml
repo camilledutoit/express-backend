@@ -82,22 +82,28 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 11: Fetch the Image Digest
+      # Step 11: Push Docker image to GHCR
+      - name: Push Docker image to GHCR
+        run: |
+          docker tag service-server:latest ghcr.io/${{ github.repository }}:latest
+          docker push ghcr.io/${{ github.repository }}:latest
+
+      # Step 12: Fetch the Image Digest
       - name: Get Image Digest
         id: digest
         run: |
           IMAGE_DIGEST=$(skopeo inspect docker://ghcr.io/${{ github.repository }}:latest | jq -r '.Digest')
           echo "IMAGE_DIGEST=$IMAGE_DIGEST" >> $GITHUB_ENV
 
-      # Step 12: Sign the Docker image with Sigstore
+      # Step 13: Sign the Docker image with Sigstore
       - name: Signing Docker image with Sigstore
         env:
           COSIGN_EXPERIMENTAL: "true"
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COSIGN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cosign sign --yes ghcr.io/${{ github.repository }}@$IMAGE_DIGEST
 
-      # Step 13: Verify the Docker image signature
+      # Step 14: Verify the Docker image signature
       - name: Verify Docker image signature
         env:
           COSIGN_EXPERIMENTAL: "true"

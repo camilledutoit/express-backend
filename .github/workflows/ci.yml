@@ -9,8 +9,8 @@ on:
       - main
 
 permissions:
+  id-token: write
   contents: read
-  packages: write
 
 jobs:
   build-and-test:
@@ -78,23 +78,23 @@ jobs:
         run: |
           docker tag service-server:latest ghcr.io/${{ github.repository }}:latest
 
-      # Step 11: Sign and Push with Docker Content Trust
-      - name: Sign and Push Docker image
-        env:
-          DOCKER_CONTENT_TRUST: 1
-          DOCKER_CONTENT_TRUST_SERVER: https://ghcr.io
-          DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE: ${{ secrets.DCT_ROOT_PASSPHRASE }}
-          DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE: ${{ secrets.DCT_REPOSITORY_PASSPHRASE }}
+      # Step 11: Install Cosign for Sigstore Signing
+      - name: Install Cosign
         run: |
-          docker trust key generate deployer
-          docker trust signer add --key deployer.pub deployer ghcr.io/${{ github.repository }}
-          docker trust sign ghcr.io/${{ github.repository }}:latest
-          docker push ghcr.io/${{ github.repository }}:latest
+          curl -sLo cosign https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64
+          chmod +x cosign
+          sudo mv cosign /usr/local/bin/
 
-      # Step 12: Verify image signature
-      - name: Verify Docker image
+      # Step 12: Sign the Docker image with Sigstore Keyless
+      - name: Sign Docker image with Sigstore
         env:
-          DOCKER_CONTENT_TRUST: 1
-          DOCKER_CONTENT_TRUST_SERVER: https://ghcr.io
+          COSIGN_EXPERIMENTAL: "true" # Enable keyless signing
         run: |
-          docker trust inspect ghcr.io/${{ github.repository }}:latest
+          cosign sign --keyless ghcr.io/${{ github.repository }}:latest
+
+      # Step 13: Verify the Docker image signature
+      - name: Verify Docker image signature
+        env:
+          COSIGN_EXPERIMENTAL: "true" # Enable keyless verification
+        run: |
+          cosign verify --keyless ghcr.io/${{ github.repository }}:latest

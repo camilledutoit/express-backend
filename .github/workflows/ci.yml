@@ -65,56 +65,34 @@ jobs:
         run: |
           conftest test ./dockerfile --policy ./policies/docker.rego
 
-      # Step 9: Install Notation
-      - name: Install Notation
-        run: |
-          curl -Lo notation.tar.gz https://github.com/notaryproject/notation/releases/download/v2.0.0-alpha.1/notation_2.0.0-alpha.1_linux_amd64.tar.gz
-          tar xvf notation.tar.gz
-          sudo mv notation /usr/local/bin/
+      # Step 9: Install Cosign
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.1.1
 
-      # Step 10: Push the Docker image to the registry
+      # Step 10: Login to GitHub Container Registry
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 11: Push Docker image
       - name: Push Docker image
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
           docker tag service-server:latest ghcr.io/${{ github.repository }}:latest
           docker push ghcr.io/${{ github.repository }}:latest
 
-      # Step 11: Configure Notation certificates
-      - name: Configure Notation certificates
-        run: |
-          # Create directories for certificates
-          mkdir -p ~/.config/notation/certificates
-          mkdir -p ~/.config/notation/keys
-          
-          # Save certificates directly
-          echo "${{ secrets.NOTATION_CERT }}" > ~/.config/notation/certificates/cert.pem
-          echo "${{ secrets.NOTATION_KEY }}" > ~/.config/notation/keys/key.pem
-          
-          # Set proper permissions for private key
-          chmod 600 ~/.config/notation/keys/key.pem
-          
-          # Add certificate and key
-          notation certificate add prod-cert --type ca --store ca ~/.config/notation/certificates/cert.pem
-          notation key import prod-key --store system --type private ~/.config/notation/keys/key.pem
-
-      # Step 12: Sign the Docker image with Notation
-      - name: Sign Docker image with Notation
-        run: |
-          notation sign --signature-format cose --key prod-key ghcr.io/${{ github.repository }}:latest
+      # Step 12: Sign the image using Keyless signing
+      - name: Sign the image
         env:
-          NOTATION_USERNAME: $GITHUB_ACTOR
-          NOTATION_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-
-      # Step 13: Set up trust policy for Notation
-      - name: Set up trust policy for Notation
+          COSIGN_EXPERIMENTAL: 1
         run: |
-          mkdir -p ~/.config/notation
-          cp trustpolicy.json ~/.config/notation/trustpolicy.json
+          cosign sign ghcr.io/${{ github.repository }}:latest
 
-      # Step 14: Verify the Docker image signature with Notation
-      - name: Verify Docker image signature with Notation
-        run: |
-          notation verify ghcr.io/${{ github.repository }}:latest
+      # Step 13: Verify the signature
+      - name: Verify the signature
         env:
-          NOTATION_USERNAME: $GITHUB_ACTOR
-          NOTATION_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          COSIGN_EXPERIMENTAL: 1
+        run: |
+          cosign verify ghcr.io/${{ github.repository }}:latest

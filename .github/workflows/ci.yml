@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build-and-test:
     name: Build, Test, and Verify
@@ -68,17 +72,30 @@ jobs:
           tar xvf notation.tar.gz
           sudo mv notation /usr/local/bin/
 
-      # Step 10: Set up Notation key (self-signed for testing)
+      # Step 10: Push the Docker image to the registry
+      - name: Push Docker image
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+          docker tag service-server:latest ghcr.io/${{ github.repository }}:latest
+          docker push ghcr.io/${{ github.repository }}:latest
+
+      # Step 11: Set up Notation key (self-signed for testing)
       - name: Set up Notation signing key
         run: |
           notation cert generate-test --default "notation-local"
 
-      # Step 11: Sign the Docker image with Notation
+      # Step 12: Sign the Docker image with Notation
       - name: Sign Docker image with Notation
         run: |
           notation sign ghcr.io/${{ github.repository }}:latest
+        env:
+          NOTATION_USERNAME: $GITHUB_ACTOR
+          NOTATION_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 12: Verify the Docker image signature with Notation
+      # Step 13: Verify the Docker image signature with Notation
       - name: Verify Docker image signature
         run: |
           notation verify ghcr.io/${{ github.repository }}:latest
+        env:
+          NOTATION_USERNAME: $GITHUB_ACTOR
+          NOTATION_PASSWORD: ${{ secrets.GITHUB_TOKEN }}

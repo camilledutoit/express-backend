@@ -123,6 +123,7 @@ jobs:
     needs: build-and-test
     runs-on: ubuntu-latest
     environment: production # Use GitHub Environments for deployments
+    if: github.event_name == 'release' && github.event.action == 'published'
 
     steps:
       # Step 1: Checkout the code

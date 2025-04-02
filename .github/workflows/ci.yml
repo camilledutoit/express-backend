@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -7,11 +7,16 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch: # Allow manual triggering of the workflow
+  release:
+    types:
+      - published # Trigger on new releases (e.g., for production deployment)
 
 permissions:
   id-token: write # Required for Sigstore keyless signing
   contents: read
   packages: write # Required to push images to GHCR
+  deployments: write # Required for GitHub Environments deployments
 
 jobs:
   build-and-test:
@@ -112,3 +117,35 @@ jobs:
             --certificate-identity "https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main" \
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
             ghcr.io/${{ github.repository }}@$IMAGE_DIGEST
+
+  deploy:
+    name: Deploy to AWS ECS
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    environment: production # Use GitHub Environments for deployments
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Configure AWS CLI
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1 # Update to your region
+
+      # Step 3: Deploy the Docker image to ECS
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service \
+            --cluster <your-cluster-name> \
+            --service <your-service-name> \
+            --force-new-deployment
+
+      # Step 4: Verify Deployment
+      - name: Verify Deployment
+        run: |
+          echo "Deployment to AWS ECS is complete. Monitor logs and health checks for confirmation."
